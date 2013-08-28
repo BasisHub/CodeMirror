@@ -1,0 +1,104 @@
+<!doctype html>
+
+<title>CodeMirror: BBj mode</title>
+<meta charset="utf-8"/>
+<link rel=stylesheet href="../../doc/docs.css">
+
+<link rel="stylesheet" href="../../lib/codemirror.css">
+<link href="http://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
+<script src="../../lib/codemirror.js"></script>
+<script src="bbj.js"></script>
+<script type="text/javascript" src="../../addon/runmode/runmode.js"></script>
+<style>
+      .CodeMirror {border: 1px solid #aaa; height:210px; height: auto;}
+      .CodeMirror-scroll { overflow-x: auto; overflow-y: hidden;}
+      .CodeMirror pre { font-family: Inconsolata; font-size: 14px}
+    </style>
+<div id=nav>
+  <a href="http://codemirror.net"><img id=logo src="../../doc/logo.png"></a>
+
+  <ul>
+    <li><a href="../../index.html">Home</a>
+    <li><a href="../../doc/manual.html">Manual</a>
+    <li><a href="https://github.com/marijnh/codemirror">Code</a>
+  </ul>
+  <ul>
+    <li><a href="../index.html">Language modes</a>
+    <li><a class=active href="#">BBj</a>
+  </ul>
+</div>
+
+<article>
+<h2>BBj mode</h2>
+
+<script type="text/javascript">
+function test(golden, text) {
+  var ok = true;
+  var i = 0;
+  function callback(token, style, lineNo, pos){
+		//console.log(String(token) + " " + String(style) + " " + String(lineNo) + " " + String(pos));
+    var result = [String(token), String(style)];
+    if (golden[i][0] != result[0] || golden[i][1] != result[1]){
+      return "Error, expected: " + String(golden[i]) + ", got: " + String(result);
+      ok = false;
+    }
+    i++;
+  }
+  CodeMirror.runMode(text, "text/x-bbj",callback); 
+
+  if (ok) return "Tests OK";
+}
+function testTypes() {
+  var golden = [['Integer','keyword'],[' ','null'],['Float','keyword']]
+  var text =  "Integer Float";
+  return test(golden,text);
+}
+function testIf(){
+  var golden = [['If','keyword'],[' ','null'],['True','keyword'],[' ','null'],['End','keyword'],[' ','null'],['If','keyword']];
+  var text = 'If True End If';
+  return test(golden, text);
+}
+function testDecl(){
+   var golden = [['Dim','keyword'],[' ','null'],['x','variable'],[' ','null'],['as','keyword'],[' ','null'],['Integer','keyword']];
+   var text = 'Dim x as Integer';
+   return test(golden, text);
+}
+function testAll(){
+  var result = "";
+
+  result += testTypes() + "\n";
+  result += testIf() + "\n";
+  result += testDecl() + "\n";
+  return result;
+
+}
+function initText(editor) {
+  var content = 'class public bottles\n\nmethod public bottles()\n\ndeclare BBjTopLevelWindow wnd!\ndeclare BBjListBox lb!\n\nwnd! = BBjAPI().openSysGui("X0").addWindow(10,10,600,600,"99 Bottles...",$00080002$)\nwnd!.setCallback(BBjAPI.ON_CLOSE,#this!,"onClose")\n\nlb! = wnd!.addListBox(100,10,10,580,580,"")\n\n#anotherBottle(1,lb!)\n\nprocess_events\n\nmethodend\n\n\nmethod public void onClose(BBjCloseEvent ev!)\n\nrelease\n\nmethodend\n\nmethod public static void anotherBottle(BBjNumber BOTTLES, BBjListBox lb!)\n\nif BOTTLES<99 then\n#anotherBottle(BOTTLES+1, lb!)\nfi\n\nif BOTTLES>1 then\n\nlb!.addItem(str(BOTTLES)+" bottles of beer on the wall, "+str(BOTTLES)+" bottles of beer.")\nlb!.addItem("Take one down and pass it around, "+str(BOTTLES-1)+" bottle"+iff(BOTTLES>1,"s","")+" of beer on the wall.") \nelse\n\nlb!.addItem("1 bottle of beer on the wall, 1 bottle of beer.") \nlb!.addItem("Take one down, pass it around, no more bottles of beer on the wall.")\n\nlb!.addItem("No more bottles of beer on the wall, no more bottles of beer. ") \nlb!.addItem("Go to the store and buy some more, 99 bottles of beer on the wall.")\n \nfi\n\nmethodend\n\nclassend\n\nb! = new bottles()';	
+  //var content = 'class public bottles\n\n    method public bottles()\n\n        declare BBjTopLevelWindow wnd!\n        declare BBjListBox        lb!\n\n        wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,600,600,"99 Bottles...",$00080002$)\n        wnd!.setCallback(BBjAPI.ON_CLOSE,#this!,"onClose")\n        \n        lb! = wnd!.addListBox(100,10,10,580,580,"")\n\n        #anotherBottle(1,lb!)\n\n        process_events\n\n    methodend\n\n\n    method public void onClose(BBjCloseEvent ev!)\n\n        release\n\n    methodend\n\n    method public static void anotherBottle(BBjNumber BOTTLES, BBjListBox lb!)\n\n        if BOTTLES<99 then\n            #anotherBottle(BOTTLES+1, lb!)\n        fi\n\n        if BOTTLES>1 then\n\n            lb!.addItem(str(BOTTLES)+" bottles of beer on the wall, "+str(BOTTLES)+" bottles of beer.")\n            lb!.addItem("Take one down and pass it around, "+str(BOTTLES-1)+" bottle"+iff(BOTTLES>1,"s","")+" of beer on the wall.")                                               \n        else\n\n            lb!.addItem("1 bottle of beer on the wall, 1 bottle of beer.")                 \n            lb!.addItem("Take one down, pass it around, no more bottles of beer on the wall.")      \n\n            lb!.addItem("No more bottles of beer on the wall, no more bottles of beer. ")   \n            lb!.addItem("Go to the store and buy some more, 99 bottles of beer on the wall.")\n             \n        fi\n\n    methodend\n\nclassend\n\nb! = new bottles()';
+  editor.setValue(content);
+  for (var i =0; i< editor.lineCount(); i++) editor.indentLine(i);
+}
+function init() {
+    editor = CodeMirror.fromTextArea(document.getElementById("solution"), {
+        lineNumbers: true,
+        mode: "text/x-bbj",
+        readOnly: false,
+        tabMode: "shift"
+    });
+    runTest();
+}
+function runTest() {
+	document.getElementById('testresult').innerHTML = testAll();
+  initText(editor);
+	
+}
+document.body.onload = init;
+</script>
+
+  <div id="edit">
+  <textarea style="width:95%;height:200px;padding:5px;" name="solution" id="solution" ></textarea>
+  </div>
+  <pre id="testresult"></pre>
+  <p>MIME type defined: <code>text/x-bbj</code>.</p>
+
+</article>
